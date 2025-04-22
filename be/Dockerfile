@@ -12,6 +12,9 @@ RUN pnpm install
 
 COPY . .
 
+# Create a modified server.js that uses environment variables
+RUN sed -i "s|origin: 'http://localhost:3000'|origin: process.env.FRONTEND_URL|g" server.js
+
 # Expose the port the app runs on
 EXPOSE 3001
 

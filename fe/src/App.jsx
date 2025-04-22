@@ -1,4 +1,5 @@
 import React from "react";
+import "./App.css";
 
 export default function App() {
   const [username, setUsername] = React.useState('');
@@ -6,32 +7,59 @@ export default function App() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [message, setMessage] = React.useState('');
   const [cookies, setCookies] = React.useState('');
+  
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-  // Simulated login function (in a real app, this would call your backend)
-  const handleLogin = (e) => {
+  // Login function that calls the backend API
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    // For demo purposes only - simulating a successful login
     if (username && password) {
-      document.cookie = `sessionToken=user_${username}_token_123; path=/`;
-      document.cookie = `user=${username}; path=/`;
-      setLoggedIn(true);
-      setMessage(`Welcome ${username}! You are now logged in.`);
-      displayCookies();
+      try {
+        const response = await fetch(`${apiUrl}/api/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include'
+        });        
+
+        const data = await response.json();
+
+        console.log("data", data);
+        
+        if (data.success) {
+          setLoggedIn(true);
+          setMessage(`Welcome ${username}! You are now logged in.`);
+          displayCookies();
+        } else {
+          setMessage(data.message || 'Login failed');
+        }
+      } catch (error) {
+        setMessage('Error connecting to server');
+        console.error('Login error:', error);
+      }
     } else {
       setMessage('Please enter both username and password');
     }
   };
 
-  const handleLogout = () => {
-    // Clear cookies
-    document.cookie = 'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    setLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    setMessage('You have been logged out');
-    setCookies('');
+  const handleLogout = async () => {
+    try {
+      await fetch(`${apiUrl}/api/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      setLoggedIn(false);
+      setUsername('');
+      setPassword('');
+      setMessage('You have been logged out');
+      setCookies('');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const displayCookies = () => {
@@ -46,7 +74,7 @@ export default function App() {
     // Display what an attacker might do with this data
     setMessage(`
       EDUCATIONAL DEMO ONLY: In a real attack, these cookies would be sent to a malicious server.
-      An attacker could then use: curl -H "Cookie: ${document.cookie}" https://your-site.com/dashboard
+      An attacker could then use: curl -H "Cookie: ${document.cookie}" ${apiUrl}/api/profile
     `);
   };
 
@@ -121,6 +149,9 @@ export default function App() {
             >
               Simulate XSS Attack
             </button>
+            <p className="text-sm text-red-700 mt-2">
+              Try the search endpoint: <a href={`${apiUrl}/api/search?q=<script>fetch('/log?cookies='+document.cookie)</script>`} target="_blank" rel="noreferrer" className="underline">Vulnerable Search</a>
+            </p>
           </div>
         </div>
       )}

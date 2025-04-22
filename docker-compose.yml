@@ -11,6 +11,8 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:80}
     restart: unless-stopped
 
   # Frontend service
@@ -18,9 +20,13 @@ services:
     build:
       context: ./fe
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${BACKEND_URL:-http://localhost:3001}
     container_name: sec-demo-frontend
     ports:
       - "80:80"
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-http://backend:3001}
     depends_on:
       - backend
     restart: unless-stopped
